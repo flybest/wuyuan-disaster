@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>防灾减灾-通知公告-list</title>
+    <link rel="stylesheet" type="text/css" href="../../css/mui.min.css"/>
+    <link rel="stylesheet" type="text/css" href="../../css/app.css"/>
+</head>
+<body>
+	<div class="mui-content">
+		<div id="noticePullrefresh" class="mui-scroll-wrapper">
+			<div class="mui-scroll">
+				<!--数据列表-->
+				<ul class="mui-table-view">
+					<!--<li class="mui-table-view-cell mui-media">
+						<a href="javascript:;">
+							<img class="mui-media-object mui-pull-left" src="../images/yuantiao.jpg">
+							<div class="mui-media-body">
+								远眺
+								<p class='mui-ellipsis'>静静的看这个世界，最后终于疯了</p>
+							</div>
+						</a>
+					</li>
+					<li class="mui-table-view-cell mui-media">
+						<a href="javascript:;">
+							<img class="mui-media-object mui-pull-left" src="../images/yuantiao.jpg">
+							<div class="mui-media-body">
+								远眺
+								<p class='mui-ellipsis'>静静的看这个世界，最后终于疯了</p>
+							</div>
+						</a>
+					</li>-->
+				</ul>
+			</div>
+		</div>
+		<a id="refreshBtn"><span class="mui-icon mui-icon-loop refresh"></span></a>
+	</div>
+	<script type="text/javascript" src="../../js/mui.min.js"></script>
+	<script type="text/javascript" src="../../js/app.js" ></script>
+	<script type="text/javascript" src="../../js/userinfo.js" ></script>
+	<script type="text/javascript" src="../../js/errorcode.js" ></script>
+	<script type="text/javascript" charset="UTF-8">
+		var keyword='';
+		
+		var startSearch = function(kw){
+			keyword=kw;
+			mui('#noticePullrefresh').pullRefresh().pullupLoading();
+		};
+		
+		var clearList = function(){
+			var table = document.body.querySelector('.mui-table-view');
+			while(table.hasChildNodes()) 
+				table.removeChild(table.firstChild);	
+			return table;
+		};
+		
+		var onUpSuccess = function(data){
+			var table = clearList();
+			try{
+				for (var i = 0; i < data.respondCount; i++) {
+					var li = document.createElement('li');
+					var img=data.notices[i].img?'<img class="mui-media-object mui-pull-left" src="'+ data.notices[i].img +'">':'';
+					li.className = 'mui-table-view-cell mui-media';
+					li.innerHTML = '<a id="'+ data.notices[i].noticeId +'">'+img+'<div class="mui-ellipsis mui-media-body"><span class="titleSpan">'+data.notices[i].noticeTitle+'</span><p class="mui-ellipsis">'+data.notices[i].publishDate+'</p></div></a>';
+					table.appendChild(li);
+					document.getElementById(data.notices[i].noticeId).addEventListener('tap',function(){
+						//这里打开详情窗口显示信息
+						var detailPage = plus.webview.getWebviewById('noticeinfodetail');
+						mui.fire(detailPage,'getNoticeDetail',{id:this.getAttribute('id')});
+						mui.openWindow({id:'noticeinfodetail'});
+					});
+				} 
+			}catch(e){
+				console.log(e.message);
+				mui.toast(errorCode.BAD_DATA);
+			}
+			
+			mui('#noticePullrefresh').pullRefresh().endPullupToRefresh(true);
+			document.querySelector('.refresh').className='mui-icon mui-icon-loop refresh';
+		};
+		 
+		var onUpError = function(errcode){
+		    document.querySelector('.refresh').className='mui-icon mui-icon-loop refresh';
+		    
+		    var err="";
+		    switch(errcode){
+			    case 'FAILED_NETWORK':
+			        err=errorCode.FAILED_NETWORK;
+			        break;
+		        case 'EMPTY_PERSONALNOTICE':
+			        err=errorCode.EMPTY_PERSONALNOTICE;
+			        break;
+			    default:
+			        err=errorCode.FAILED_LOADED;
+		    }
+		    mui('#noticePullrefresh').pullRefresh().endPullupToRefresh(true);
+		    	mui.toast(err);
+		}; 
+ 
+		function pullupRefresh() {
+			document.querySelector('.refresh').className='mui-icon mui-icon-loop refresh refreshstart';
+			var params = {account:userInfo.username(),keyword:keyword};
+			app.webQuery(app.getnoticelist_url, params, onUpSuccess, onUpError, 1);
+		};
+
+      	(function($, doc) {
+			$.init({
+				pullRefresh : {
+					container:'#noticePullrefresh',//待刷新区域标识，querySelector能定位的css选择器均可，比如：id、.class等
+					up : {
+						contentrefresh : '正在加载...',//可选，正在加载状态时，上拉加载控件上显示的标题内容
+						contentnomore : '没有更多数据了',//可选，请求完毕若没有更多数据时显示的提醒内容；
+						callback : pullupRefresh //必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+					}
+				} 
+			});
+			
+			$.plusReady(function() {
+				document.getElementById('refreshBtn').addEventListener('tap',function(){
+					keyword='';
+					mui('#noticePullrefresh').pullRefresh().pullupLoading();
+				});
+				
+				window.addEventListener('startGetData',function(){
+					setTimeout(function() {
+						mui('#noticePullrefresh').pullRefresh().pullupLoading();
+					}, 0);
+				});
+			});
+		})(mui, document);
+
+    </script>
+</body>
+</html>

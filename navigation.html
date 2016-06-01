@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>防灾减灾-导航</title>
+    <link rel="stylesheet" type="text/css" href="css/mui.min.css"/>
+    <link rel="stylesheet" type="text/css" href="css/app.css"/>
+</head>
+<body>
+	<header id="navtitle" class="mui-bar mui-bar-nav">
+		<h1  class="mui-title adp-title">菜单</h1>
+		<a data-page="setting" class="mui-icon mui-icon-gear mui-pull-right"></a>
+	</header>
+	<div id="navcontent" class="mui-content">
+		<ul class="mui-table-view mui-grid-view mui-grid-9">
+            
+             <li class="mui-table-view-cell mui-media mui-col-xs-6">
+            		<a data-page="noticeinfosearch">
+	                <span class=""><img src="img/changeinfo.png" width="50" height="50" /> </span>
+	                <div class="mui-media-body">通知公告</div>
+            		</a>
+            </li>
+             <li class="mui-table-view-cell mui-media mui-col-xs-6">
+            		<a data-page="alertinfosearch">
+	                <span class=""><img src="img/upinfo.png" width="50" height="50" /> </span>
+	                <div class="mui-media-body">预警信息</div>
+            		</a>
+            </li>
+        </ul> 
+	</div>
+	<script type="text/javascript" src="js/mui.min.js"></script>
+	<script type="text/javascript" src="js/app.js" ></script>
+	<script type="text/javascript" src="js/userinfo.js" ></script>
+	<script type="text/javascript">
+		var uploading = false;
+		
+		var onUploadSuccess = function(){
+			uploading=false;
+		}
+		
+		var onUploadError = function(){
+			onUploadSuccess();
+		}
+				
+		var uploadLocation = function(){
+			if(!uploading){
+				plus.geolocation.getCurrentPosition(function(geoData){
+					var param={account:userInfo.username(),latitude:geoData.coords.latitude,longitude:geoData.coords.longitude};
+					uploading = true;
+					app.webQuery(app.locationupload_url,params,onUploadSuccess,onUploadError,1);
+				},function(err){
+				});
+			}
+		}
+	
+		(function($){
+			$.init({
+				preloadPages:[{
+					"id": "setting",
+					"url":app.project_url+"setting.html"
+				},{
+					"id": "noticeinfosearch",
+					"url":app.project_url+"work/noticeinfo/noticeinfosearch.html",
+					"subpages":[{
+						"id":"noticeinfosearchlist",
+						"url" : app.project_url+"work/noticeinfo/noticeinfosearchlist.html",
+						"styles":{
+							"top":"44px",
+							"bottom":"0px"
+						}
+					}]
+				},{
+					"id": "alertinfosearch",
+					"url":app.project_url+"work/alertinfo/alertinfosearch.html",
+					"subpages":[{
+						"id":"alertinfosearchlist",
+						"url" : app.project_url+"work/alertinfo/alertinfosearchlist.html",
+						"styles":{
+							"top":"44px",
+							"bottom":"0px"
+						}
+					}]
+				}],
+				statusBarBackground: '#4a82d1' 
+			});
+			
+			$.plusReady(function(){
+				$("body").on('tap','a',function(e){
+					var pageId = this.getAttribute("data-page");	
+					var detailPage = plus.webview.getWebviewById(pageId).children()[0];
+					$.fire(detailPage,'startGetData',{});
+					setTimeout(function() {
+						$.openWindow({
+							id: pageId,
+							show: {
+								aniShow: 'pop-in'
+							},
+							waiting: {
+								autoShow: false
+							}
+						});
+					}, 0);
+				}); 
+				
+				$.back = function(){
+					var btn = ["确定","取消"];
+					$.confirm('确认退出应用？','提示',btn,function(e){
+						if(e.index==0){
+							//执行mui封装好的窗口关闭逻辑；
+							plus.runtime.quit();
+						}
+					});
+				};
+				
+				window.setInterval(uploadLocation,60000);
+			});
+		}(mui));
+	</script>
+</body>
+</html>
