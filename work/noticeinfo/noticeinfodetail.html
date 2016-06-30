@@ -47,7 +47,12 @@
 		<script type="text/javascript" src="../../js/userinfo.js" ></script>
 		<script type="text/javascript" src="../../js/replytype.data.js" ></script>
 		<script>
-			var wd, noticeId='';
+			var wd, noticeId='', attachType='image';
+			
+			var refreshList = function(){
+				var contentWebView=plus.webview.getWebviewById('noticeinfosearchlist');
+				contentWebView.evalJS("mui('#noticePullrefresh').pullRefresh().pullupLoading()");
+			};
 			
 			var addAttachment =function(attach){
 				var attachContainer=document.getElementById('attachment').parentNode;
@@ -88,6 +93,7 @@
 				if(newAttachmentList.length==0 || app.getValue('replyType')==1){
 					wd.close();
 					mui.toast('提交成功');
+					refreshList();
 					mui.back();
 					return;
 				}
@@ -104,6 +110,7 @@
 							wd.close();
 							mui.toast(errorCode.FAILED_UPLOAD + ":" + status);
 						}
+						refreshList();
 						mui.back();
 					}
 				);
@@ -186,10 +193,13 @@
 					var replyType = document.getElementById('replyType');
 					replyType.addEventListener('tap', function(event) {
 						replyTypePicker.show(function(items) {
-							replyType.innerText = items[0].text;
-							replyType.value = items[0].value;
-							app.setElementVisiablity('.attachBlock',(items[0].text=='文本')?false:true);
-							
+							if(replyType.value != items[0].value){
+								replyType.innerText = items[0].text;
+								replyType.value = items[0].value;
+								app.setElementVisiablity('.attachBlock',(items[0].text=='文本')?false:true);
+								attachType=(items[0].value==3)?'video':'image';
+								clearAttach();
+							}
 							//返回 false 可以阻止选择框的关闭
 							//return false;
 						});
@@ -215,7 +225,7 @@
 					    		});
 					    }, function ( e ) {
 					    	
-					    }, {filter:"none",system:true} );
+					    }, {filter:attachType,system:true} );
 					});
 					
 					document.getElementById('submitBtn').addEventListener('tap',function(){

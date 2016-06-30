@@ -39,22 +39,22 @@
 		
 		var onUploadSuccess = function(){
 			uploading=false;
-		}
+		};
 		
 		var onUploadError = function(){
 			onUploadSuccess();
-		}
+		};
 				
 		var uploadLocation = function(){
 			if(!uploading){
 				plus.geolocation.getCurrentPosition(function(geoData){
-					var param={account:userInfo.username(),latitude:geoData.coords.latitude,longitude:geoData.coords.longitude};
+					var params={account:userInfo.username(),latitude:geoData.coords.latitude,longitude:geoData.coords.longitude};
 					uploading = true;
 					app.webQuery(app.locationupload_url,params,onUploadSuccess,onUploadError,1);
 				},function(err){
 				});
 			}
-		}
+		};
 	
 		(function($){
 			$.init({
